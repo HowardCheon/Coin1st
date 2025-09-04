@@ -1,5 +1,6 @@
 # 🪙 StableCoin DApp - Global Deployment
 
+> **🔴 LIVE DEMO**: [https://your-username.github.io/stable_coin](https://your-username.github.io/stable_coin)  
 > **Live on Sepolia Testnet** - Contract: `0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924`
 
 A fully-featured StableCoin DApp with admin controls, mobile support, and MetaMask integration.

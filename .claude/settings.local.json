@@ -40,7 +40,8 @@
       "Bash(git commit:*)",
       "Bash(echo:*)",
       "Bash(surge:*)",
-      "Bash(npx surge:*)"
+      "Bash(npx surge:*)",
+      "Bash(npx netlify deploy:*)"
     ],
     "deny": [],
     "ask": []
