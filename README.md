@@ -1,7 +1,7 @@
 # 🪙 StableCoin DApp - Global Deployment
 
 > **🔴 LIVE DEMO**: [https://your-username.github.io/stable_coin](https://your-username.github.io/stable_coin)  
-> **Live on Sepolia Testnet** - Contract: `0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924`
+> **Live on Sepolia Testnet** - Contract: `0x88c4b95ad669C02607345C10eef3569894C6D0Be`
 
 A fully-featured StableCoin DApp with admin controls, mobile support, and MetaMask integration.
 
@@ -53,9 +53,9 @@ firebase deploy
 ## 🔗 Live Contract Details
 
 - **Network**: Sepolia Testnet  
-- **Contract**: `0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924`
-- **Etherscan**: [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924)
-- **Symbol**: STABLE
+- **Contract**: `0x88c4b95ad669C02607345C10eef3569894C6D0Be`
+- **Etherscan**: [View on Sepolia Etherscan](https://sepolia.etherscan.io/address/0x88c4b95ad669C02607345C10eef3569894C6D0Be)
+- **Symbol**: HECTO
 - **Decimals**: 18
 
 ## 🎯 Usage

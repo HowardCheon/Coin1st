@@ -8,8 +8,8 @@ async function main() {
   console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
   // Contract deployment parameters
-  const TOKEN_NAME = "StableCoin";
-  const TOKEN_SYMBOL = "STABLE";
+  const TOKEN_NAME = "HectoCoin";
+  const TOKEN_SYMBOL = "HECTO";
   const INITIAL_SUPPLY = 1000000; // 1 million tokens
 
   console.log("\nDeployment Parameters:");
@@ -25,7 +25,7 @@ async function main() {
   await stableCoin.waitForDeployment();
   const contractAddress = await stableCoin.getAddress();
   
-  console.log("✅ StableCoin deployed to:", contractAddress);
+  console.log("✅ HectoCoin deployed to:", contractAddress);
 
   // Verify deployment
   console.log("\n🔍 Verifying deployment...");
@@ -83,7 +83,7 @@ async function main() {
     console.log("\n🔗 Next Steps:");
     console.log("1. Wait for a few block confirmations");
     console.log("2. Verify contract on Etherscan:");
-    console.log(`   npx hardhat verify --network ${networkName} ${contractAddress} "${TOKEN_NAME}" "${TOKEN_SYMBOL}" ${INITIAL_SUPPLY}`);
+    console.log(`   npx hardhat verify --network ${networkName} ${contractAddress} "HectoCoin" "HECTO" ${INITIAL_SUPPLY}`);
     console.log("\n3. Add contract to MetaMask:");
     console.log("   Token Address:", contractAddress);
     console.log("   Token Symbol:", TOKEN_SYMBOL);

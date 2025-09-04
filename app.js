@@ -151,8 +151,8 @@ class StableCoinDApp {
         if (networkSelect.value === 'localhost') {
             contractAddressInput.value = '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318';
         } else if (networkSelect.value === 'sepolia') {
-            // Deployed Sepolia contract address
-            contractAddressInput.value = '0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924';
+            // Deployed HectoCoin contract address
+            contractAddressInput.value = '0x88c4b95ad669C02607345C10eef3569894C6D0Be';
         }
     }
     
@@ -417,8 +417,8 @@ class StableCoinDApp {
         if (selectedNetwork === 'localhost') {
             contractAddressInput.value = '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318';
         } else if (selectedNetwork === 'sepolia') {
-            // Deployed Sepolia contract address
-            contractAddressInput.value = '0x0b1Ae6EcCCE85C0FA059b4eff1FbE3bD5D4d5924';
+            // Deployed HectoCoin contract address
+            contractAddressInput.value = '0x88c4b95ad669C02607345C10eef3569894C6D0Be';
         } else {
             contractAddressInput.value = '';
         }

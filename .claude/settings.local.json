@@ -41,7 +41,8 @@
       "Bash(echo:*)",
       "Bash(surge:*)",
       "Bash(npx surge:*)",
-      "Bash(npx netlify deploy:*)"
+      "Bash(npx netlify deploy:*)",
+      "Read(/C:\\ETC\\claude\\stable_coin\\scripts/**)"
     ],
     "deny": [],
     "ask": []
