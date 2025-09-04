@@ -37,7 +37,10 @@
       "Bash(vercel:*)",
       "Bash(npx vercel:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(echo:*)",
+      "Bash(surge:*)",
+      "Bash(npx surge:*)"
     ],
     "deny": [],
     "ask": []
