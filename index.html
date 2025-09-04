@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StableCoin DApp Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .card {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status.disconnected {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .network-info {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪙 StableCoin DApp</h1>
+        
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="status disconnected">
+            MetaMask 연결되지 않음
+        </div>
+        
+        <!-- Wallet Connection -->
+        <div class="card">
+            <h3>🦊 지갑 연결</h3>
+            <button id="connectWallet">MetaMask 연결</button>
+            <button id="testButton" style="background: #e53e3e; margin-top: 10px;">🔍 디버그 테스트</button>
+            <div id="walletInfo" style="display: none;">
+                <div class="info-row">
+                    <span>지갑 주소:</span>
+                    <span id="walletAddress"></span>
+                </div>
+                <div class="info-row">
+                    <span>ETH 잔액:</span>
+                    <span id="ethBalance">0 ETH</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contract Configuration -->
+        <div class="card">
+            <h3>⚙️ 토큰 설정</h3>
+            <div class="form-group">
+                <label>네트워크:</label>
+                <select id="networkSelect">
+                    <option value="localhost">로컬 (Hardhat)</option>
+                    <option value="sepolia">Sepolia 테스트넷</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>토큰 컨트랙트 주소:</label>
+                <input type="text" id="contractAddress" placeholder="0x...">
+            </div>
+            <button id="loadContract">토큰 정보 로드</button>
+        </div>
+        
+        <!-- Token Information -->
+        <div class="card" id="tokenInfo" style="display: none;">
+            <h3>📊 토큰 정보</h3>
+            <div class="info-row">
+                <span>토큰명:</span>
+                <span id="tokenName">-</span>
+            </div>
+            <div class="info-row">
+                <span>심볼:</span>
+                <span id="tokenSymbol">-</span>
+            </div>
+            <div class="info-row">
+                <span>총 공급량:</span>
+                <span id="totalSupply">-</span>
+            </div>
+            <div class="info-row">
+                <span>내 잔액:</span>
+                <span id="tokenBalance">0</span>
+            </div>
+            <button id="refreshBalance">잔액 새로고침</button>
+        </div>
+        
+        <!-- Token Transfer -->
+        <div class="card" id="transferSection" style="display: none;">
+            <h3>💸 토큰 전송</h3>
+            <div class="form-group">
+                <label>받는 주소:</label>
+                <input type="text" id="recipientAddress" placeholder="0x...">
+            </div>
+            <div class="form-group">
+                <label>전송 금액:</label>
+                <input type="number" id="transferAmount" placeholder="0" step="0.000000000000000001">
+            </div>
+            <button id="transferTokens">토큰 전송</button>
+        </div>
+
+        <!-- Admin Functions -->
+        <div class="card" id="adminSection" style="display: none;">
+            <h3>🔧 관리자 기능</h3>
+            <div id="adminStatus" style="text-align: center; margin-bottom: 20px; padding: 10px; border-radius: 8px; background: #e2e8f0; color: #4a5568;">
+                관리자 권한 확인 중...
+            </div>
+            
+            <!-- Mint Section -->
+            <div class="form-group">
+                <h4>🪙 토큰 발행 (Mint)</h4>
+                <label>받는 주소:</label>
+                <input type="text" id="mintAddress" placeholder="0x...">
+                <label>발행 수량:</label>
+                <input type="number" id="mintAmount" placeholder="0" step="0.000000000000000001">
+                <button id="mintTokens" style="background: #38a169;">토큰 발행</button>
+            </div>
+
+            <!-- Burn Section -->
+            <div class="form-group">
+                <h4>🔥 토큰 소각 (Burn)</h4>
+                <label>소각 수량:</label>
+                <input type="number" id="burnAmount" placeholder="0" step="0.000000000000000001">
+                <button id="burnTokens" style="background: #e53e3e;">토큰 소각</button>
+            </div>
+
+            <!-- Pause/Unpause Section -->
+            <div class="form-group">
+                <h4>⏸️ 계약 일시정지</h4>
+                <div class="info-row">
+                    <span>현재 상태:</span>
+                    <span id="pauseStatus">확인 중...</span>
+                </div>
+                <button id="togglePause" style="background: #d69e2e;">일시정지 토글</button>
+            </div>
+
+            <!-- Blacklist Section -->
+            <div class="form-group">
+                <h4>🚫 블랙리스트 관리</h4>
+                <label>계정 주소:</label>
+                <input type="text" id="blacklistAddress" placeholder="0x...">
+                <div style="display: flex; gap: 10px;">
+                    <button id="addBlacklist" style="background: #e53e3e; flex: 1;">블랙리스트 추가</button>
+                    <button id="removeBlacklist" style="background: #38a169; flex: 1;">블랙리스트 제거</button>
+                </div>
+                <button id="checkBlacklist" style="background: #3182ce; margin-top: 10px;">블랙리스트 상태 확인</button>
+            </div>
+        </div>
+        
+        <!-- Loading & Messages -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>처리 중...</p>
+        </div>
+        
+        <div id="successMessage" class="success"></div>
+        <div id="errorMessage" class="error"></div>
+        
+        <div class="network-info">
+            현재 네트워크: <span id="currentNetwork">미연결</span>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script>
+        // Ethers.js 로딩 확인
+        if (typeof ethers === 'undefined') {
+            console.error('Ethers.js 로딩 실패!');
+            document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h1>❌ Ethers.js 로딩 실패</h1><p>인터넷 연결을 확인해주세요.</p></div>';
+        } else {
+            console.log('Ethers.js 로딩 성공:', ethers.version);
+        }
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "stable_coin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:governance": "hardhat test test/Governance.test.js",
+    "deploy": "hardhat run scripts/deploy.js",
+    "deploy:local": "hardhat run scripts/deploy-local.js --network localhost",
+    "deploy:governance": "hardhat run scripts/deploy-governance.js",
+    "deploy:governance:sepolia": "hardhat run scripts/deploy-governance.js --network sepolia",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "verify": "hardhat run scripts/verify.js",
+    "verify:sepolia": "hardhat run scripts/verify.js --network sepolia",
+    "node": "hardhat node",
+    "interact:setup": "node scripts/interactions/setup.js",
+    "interact:token": "node scripts/interactions/token-operations.js",
+    "interact:multisig": "node scripts/interactions/multisig-operations.js",
+    "interact:governance": "node scripts/interactions/governance-workflow.js",
+    "interact:monitor": "node scripts/interactions/monitoring.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "dotenv": "^17.2.2",
+    "hardhat": "^2.26.3",
+    "hardhat-gas-reporter": "^2.3.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
+  }
+}
