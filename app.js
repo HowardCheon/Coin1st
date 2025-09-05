@@ -656,10 +656,44 @@ class StableCoinDApp {
             
             console.log('mint 트랜잭션 전송 중...');
             
+            // MetaMask 연결 상태 재확인
+            console.log('MetaMask 연결 상태 재확인...');
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            console.log('현재 연결된 계정:', accounts);
+            
+            if (accounts.length === 0) {
+                throw new Error('MetaMask 계정 연결이 해제되었습니다. 다시 연결해주세요.');
+            }
+            
+            // 네트워크 재확인
+            const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+            console.log('현재 체인 ID:', currentChainId);
+            
+            // 직접적인 트랜잭션 호출 시도
+            console.log('직접 트랜잭션 파라미터:', {
+                to: this.contract.address,
+                from: this.account,
+                data: this.contract.interface.encodeFunctionData('mint', [mintAddress, amountWei])
+            });
+            
+            try {
+                // 먼저 estimateGas로 한번 더 확인
+                console.log('최종 가스 추정 확인...');
+                const finalGasEstimate = await this.web3.estimateGas({
+                    to: this.contract.address,
+                    from: this.account,
+                    data: this.contract.interface.encodeFunctionData('mint', [mintAddress, amountWei])
+                });
+                console.log('최종 가스 추정:', finalGasEstimate.toString());
+            } catch (gasError) {
+                console.error('가스 추정 실패:', gasError);
+                throw new Error('트랜잭션 실행 불가: ' + gasError.message);
+            }
+            
             // 타임아웃과 함께 트랜잭션 전송 (2분으로 연장)
             const txPromise = this.contract.mint(mintAddress, amountWei);
             const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('트랜잭션 전송 타임아웃 (2분). MetaMask 팝업을 확인하거나 네트워크 상태를 점검해주세요.')), 120000);
+                setTimeout(() => reject(new Error('트랜잭션 전송 타임아웃 (2분). MetaMask가 응답하지 않습니다.')), 120000);
             });
             
             // 사용자에게 MetaMask 확인 알림
