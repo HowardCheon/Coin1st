@@ -590,30 +590,52 @@ class StableCoinDApp {
     }
     
     async mintTokens() {
+        console.log('mintTokens 함수 호출됨');
         try {
             this.showLoading(true);
+            console.log('로딩 표시 시작');
             
             if (!this.contract) {
+                console.log('컨트랙트가 없음');
                 throw new Error('먼저 토큰 컨트랙트를 로드해주세요.');
             }
             
             const mintAddress = document.getElementById('mintAddress').value;
             const mintAmount = document.getElementById('mintAmount').value;
             
+            console.log('발행 정보:', { mintAddress, mintAmount });
+            
             if (!mintAddress || !ethers.utils.isAddress(mintAddress)) {
+                console.log('잘못된 주소');
                 throw new Error('올바른 받는 주소를 입력해주세요.');
             }
             
             if (!mintAmount || parseFloat(mintAmount) <= 0) {
+                console.log('잘못된 수량');
                 throw new Error('올바른 발행 수량을 입력해주세요.');
             }
             
+            console.log('관리자 권한 재확인 중...');
+            const owner = await this.contract.owner();
+            const isAdmin = owner.toLowerCase() === this.account.toLowerCase();
+            console.log('소유자:', owner, '현재 계정:', this.account, '관리자 권한:', isAdmin);
+            
+            if (!isAdmin) {
+                throw new Error('관리자 권한이 없습니다. 올바른 관리자 계정으로 연결해주세요.');
+            }
+            
             const amountWei = ethers.utils.parseEther(mintAmount);
+            console.log('발행 수량 (Wei):', amountWei.toString());
+            
+            console.log('mint 트랜잭션 전송 중...');
             const tx = await this.contract.mint(mintAddress, amountWei);
+            console.log('트랜잭션 해시:', tx.hash);
             
             this.showSuccess('토큰 발행 트랜잭션 전송됨! 확인을 기다리는 중...');
             
+            console.log('트랜잭션 확인 대기 중...');
             const receipt = await tx.wait();
+            console.log('트랜잭션 확인됨:', receipt.transactionHash);
             
             this.showLoading(false);
             this.showSuccess(`토큰 발행 완료! ${mintAmount} HECTO가 ${mintAddress}에 발행되었습니다. 트랜잭션: ${receipt.transactionHash}`);
@@ -621,12 +643,26 @@ class StableCoinDApp {
             // Clear form and refresh
             document.getElementById('mintAddress').value = '';
             document.getElementById('mintAmount').value = '';
+            console.log('폼 초기화 및 정보 새로고침 중...');
             await this.refreshBalance();
             await this.loadTokenInfo();
             
         } catch (error) {
+            console.error('토큰 발행 오류:', error);
+            console.error('오류 상세:', error.message);
             this.showLoading(false);
-            this.showError('토큰 발행 실패: ' + error.message);
+            
+            // 더 구체적인 오류 메시지
+            let errorMessage = error.message;
+            if (error.code === 4001) {
+                errorMessage = '사용자가 트랜잭션을 거부했습니다.';
+            } else if (error.code === -32603) {
+                errorMessage = '트랜잭션 실행 중 오류가 발생했습니다. 가스비나 권한을 확인해주세요.';
+            } else if (error.message.includes('execution reverted')) {
+                errorMessage = '컨트랙트에서 트랜잭션을 거부했습니다. 권한이나 컨트랙트 상태를 확인해주세요.';
+            }
+            
+            this.showError('토큰 발행 실패: ' + errorMessage);
         }
     }
     
