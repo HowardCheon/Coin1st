@@ -116,6 +116,7 @@ class StableCoinDApp {
         // Token operations
         document.getElementById('refreshBalance').addEventListener('click', () => this.refreshBalance());
         document.getElementById('transferTokens').addEventListener('click', () => this.transferTokens());
+        document.getElementById('fillRecipientAddress').addEventListener('click', () => this.fillRecipientAddress());
         
         // Admin functions
         document.getElementById('mintTokens').addEventListener('click', () => this.mintTokens());
@@ -360,6 +361,7 @@ class StableCoinDApp {
     }
     
     async transferTokens() {
+        console.log('transferTokens 함수 호출됨');
         try {
             this.showLoading(true);
             
@@ -370,6 +372,8 @@ class StableCoinDApp {
             const recipient = document.getElementById('recipientAddress').value;
             const amount = document.getElementById('transferAmount').value;
             
+            console.log('전송 정보:', { recipient, amount });
+            
             if (!recipient || !ethers.utils.isAddress(recipient)) {
                 throw new Error('올바른 받는 주소를 입력해주세요.');
             }
@@ -379,31 +383,81 @@ class StableCoinDApp {
             }
             
             const amountWei = ethers.utils.parseEther(amount);
+            console.log('전송 금액 (Wei):', amountWei.toString());
             
             // Check balance
+            console.log('잔액 확인 중...');
             const balance = await this.contract.balanceOf(this.account);
+            console.log('현재 잔액:', balance.toString(), '전송 금액:', amountWei.toString());
+            
             if (balance.lt(amountWei)) {
                 throw new Error('잔액이 부족합니다.');
             }
             
-            const tx = await this.contract.transfer(recipient, amountWei);
+            // 대안적 transfer 방식 시도
+            console.log('대안적 transfer 방식으로 전송 시도');
+            const txParams = {
+                to: this.contract.address,
+                from: this.account,
+                data: this.contract.interface.encodeFunctionData('transfer', [recipient, amountWei]),
+                gas: '0x15F90', // 90000 가스
+            };
             
-            this.showSuccess('트랜잭션 전송됨! 확인을 기다리는 중...');
+            console.log('transfer 트랜잭션 파라미터:', txParams);
             
-            const receipt = await tx.wait();
+            // 여러 방법으로 트랜잭션 시도
+            let txHash;
+            
+            try {
+                console.log('방법 1: eth_sendTransaction 시도...');
+                const txPromise = window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [txParams],
+                });
+                
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('transfer 트랜잭션 타임아웃')), 10000)
+                );
+                
+                txHash = await Promise.race([txPromise, timeoutPromise]);
+                console.log('transfer 방법 1 성공!');
+                
+            } catch (error) {
+                console.log('transfer 방법 1 실패:', error.message);
+                
+                try {
+                    console.log('방법 2: MetaMask 권한 재요청 후 시도...');
+                    await window.ethereum.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+                    
+                    txHash = await window.ethereum.request({
+                        method: 'eth_sendTransaction',
+                        params: [txParams],
+                    });
+                    console.log('transfer 방법 2 성공!');
+                    
+                } catch (error2) {
+                    console.log('transfer 방법 2 실패:', error2.message);
+                    throw new Error('토큰 전송 실패. MetaMask 팝업을 확인하거나 페이지를 새로고침해주세요.');
+                }
+            }
+            
+            console.log('transfer 트랜잭션 해시:', txHash);
+            this.showSuccess(`토큰 전송 트랜잭션 전송됨! 해시: ${txHash}`);
             
             this.showLoading(false);
-            this.showSuccess(`토큰 전송 완료! 트랜잭션 해시: ${receipt.transactionHash}`);
-            
-            // Refresh balance
-            await this.refreshBalance();
-            await this.updateWalletInfo();
             
             // Clear form
             document.getElementById('recipientAddress').value = '';
             document.getElementById('transferAmount').value = '';
             
+            // 잠시 후 상태 새로고침
+            setTimeout(() => {
+                this.refreshBalance();
+                this.updateWalletInfo();
+            }, 3000);
+            
         } catch (error) {
+            console.error('토큰 전송 오류:', error);
             this.showLoading(false);
             this.showError('토큰 전송 실패: ' + error.message);
         }
@@ -508,6 +562,18 @@ class StableCoinDApp {
         mintAddressField.value = this.account;
         console.log('내 주소로 자동 채움:', this.account);
         this.showSuccess('내 주소로 설정되었습니다.');
+    }
+    
+    fillRecipientAddress() {
+        if (!this.account) {
+            this.showError('먼저 MetaMask를 연결해주세요.');
+            return;
+        }
+        
+        const recipientAddressField = document.getElementById('recipientAddress');
+        recipientAddressField.value = this.account;
+        console.log('받는 주소를 내 주소로 자동 채움:', this.account);
+        this.showSuccess('받는 주소가 내 주소로 설정되었습니다.');
     }
     
     async refreshMetaMask() {
