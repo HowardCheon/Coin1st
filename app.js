@@ -634,8 +634,35 @@ class StableCoinDApp {
             const amountWei = ethers.utils.parseEther(mintAmount);
             console.log('발행 수량 (Wei):', amountWei.toString());
             
+            // 컨트랙트 상태 확인
+            try {
+                console.log('컨트랙트 연결 상태 확인 중...');
+                const isPaused = await this.contract.paused();
+                console.log('컨트랙트 일시정지 상태:', isPaused);
+                
+                if (isPaused) {
+                    throw new Error('컨트랙트가 일시정지 상태입니다. 먼저 재개해주세요.');
+                }
+                
+                // 가스 추정
+                console.log('가스 추정 중...');
+                const gasEstimate = await this.contract.estimateGas.mint(mintAddress, amountWei);
+                console.log('예상 가스:', gasEstimate.toString());
+                
+            } catch (gasError) {
+                console.error('사전 검증 실패:', gasError);
+                throw new Error('트랜잭션 사전 검증 실패: ' + gasError.message);
+            }
+            
             console.log('mint 트랜잭션 전송 중...');
-            const tx = await this.contract.mint(mintAddress, amountWei);
+            
+            // 타임아웃과 함께 트랜잭션 전송
+            const txPromise = this.contract.mint(mintAddress, amountWei);
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('트랜잭션 전송 타임아웃 (30초)')), 30000);
+            });
+            
+            const tx = await Promise.race([txPromise, timeoutPromise]);
             console.log('트랜잭션 해시:', tx.hash);
             
             this.showSuccess('토큰 발행 트랜잭션 전송됨! 확인을 기다리는 중...');
