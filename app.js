@@ -111,6 +111,7 @@ class StableCoinDApp {
         
         // Contract loading
         document.getElementById('loadContract').addEventListener('click', () => this.loadContract());
+        document.getElementById('testConnection').addEventListener('click', () => this.testContractConnection());
         
         // Token operations
         document.getElementById('refreshBalance').addEventListener('click', () => this.refreshBalance());
@@ -118,6 +119,7 @@ class StableCoinDApp {
         
         // Admin functions
         document.getElementById('mintTokens').addEventListener('click', () => this.mintTokens());
+        document.getElementById('mintTokensAlt').addEventListener('click', () => this.mintTokensAlternative());
         document.getElementById('burnTokens').addEventListener('click', () => this.burnTokens());
         document.getElementById('togglePause').addEventListener('click', () => this.togglePause());
         document.getElementById('addBlacklist').addEventListener('click', () => this.addToBlacklist());
@@ -492,6 +494,126 @@ class StableCoinDApp {
         };
         
         return networkNames[this.chainId] || `Unknown (${this.chainId})`;
+    }
+    
+    async testContractConnection() {
+        console.log('컨트랙트 연결 테스트 시작');
+        try {
+            this.showLoading(true);
+            
+            if (!this.account) {
+                throw new Error('먼저 지갑을 연결해주세요.');
+            }
+            
+            const contractAddress = document.getElementById('contractAddress').value;
+            if (!contractAddress || !ethers.utils.isAddress(contractAddress)) {
+                throw new Error('올바른 컨트랙트 주소를 입력해주세요.');
+            }
+            
+            // 기본 연결 테스트
+            console.log('1. 기본 연결 테스트');
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const code = await provider.getCode(contractAddress);
+            console.log('컨트랙트 코드 존재:', code !== '0x');
+            
+            if (code === '0x') {
+                throw new Error('해당 주소에 컨트랙트가 배포되지 않았습니다.');
+            }
+            
+            // 네트워크 확인
+            console.log('2. 네트워크 확인');
+            const network = await provider.getNetwork();
+            console.log('네트워크 정보:', network);
+            
+            // 컨트랙트 생성 및 기본 호출 테스트
+            console.log('3. 컨트랙트 인스턴스 테스트');
+            const signer = provider.getSigner();
+            const contract = new ethers.Contract(contractAddress, this.tokenABI, signer);
+            
+            // 읽기 전용 함수들 테스트
+            console.log('4. 읽기 함수들 테스트');
+            const name = await contract.name();
+            const symbol = await contract.symbol();
+            const totalSupply = await contract.totalSupply();
+            console.log('토큰 정보:', { name, symbol, totalSupply: totalSupply.toString() });
+            
+            // 트랜잭션 가능 여부 테스트 (실제 실행 안함)
+            console.log('5. 트랜잭션 시뮬레이션 테스트');
+            const balance = await contract.balanceOf(this.account);
+            console.log('현재 잔액:', balance.toString());
+            
+            // 가스 추정 테스트 (작은 금액으로)
+            try {
+                const gasEstimate = await contract.estimateGas.transfer(this.account, 1);
+                console.log('전송 가스 추정 성공:', gasEstimate.toString());
+            } catch (gasError) {
+                console.log('전송 가스 추정 실패 (정상일 수 있음):', gasError.message);
+            }
+            
+            this.showLoading(false);
+            this.showSuccess('컨트랙트 연결 테스트 완료! 콘솔에서 상세 정보를 확인하세요.');
+            
+        } catch (error) {
+            console.error('연결 테스트 실패:', error);
+            this.showLoading(false);
+            this.showError('연결 테스트 실패: ' + error.message);
+        }
+    }
+    
+    async mintTokensAlternative() {
+        console.log('대안적 mint 방식 시도');
+        try {
+            this.showLoading(true);
+            
+            if (!this.contract) {
+                throw new Error('먼저 토큰 컨트랙트를 로드해주세요.');
+            }
+            
+            const mintAddress = document.getElementById('mintAddress').value;
+            const mintAmount = document.getElementById('mintAmount').value;
+            
+            if (!mintAddress || !ethers.utils.isAddress(mintAddress)) {
+                throw new Error('올바른 받는 주소를 입력해주세요.');
+            }
+            
+            if (!mintAmount || parseFloat(mintAmount) <= 0) {
+                throw new Error('올바른 발행 수량을 입력해주세요.');
+            }
+            
+            const amountWei = ethers.utils.parseEther(mintAmount);
+            
+            // window.ethereum을 직접 사용한 트랜잭션
+            console.log('window.ethereum으로 직접 트랜잭션 전송');
+            const txParams = {
+                to: this.contract.address,
+                from: this.account,
+                data: this.contract.interface.encodeFunctionData('mint', [mintAddress, amountWei]),
+                gas: '0x15F90', // 90000 가스
+            };
+            
+            console.log('트랜잭션 파라미터:', txParams);
+            
+            const txHash = await window.ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [txParams],
+            });
+            
+            console.log('트랜잭션 해시:', txHash);
+            this.showSuccess(`대안 방식으로 트랜잭션 전송 완료! 해시: ${txHash}`);
+            
+            this.showLoading(false);
+            
+            // 잠시 후 상태 새로고침
+            setTimeout(() => {
+                this.refreshBalance();
+                this.loadTokenInfo();
+            }, 3000);
+            
+        } catch (error) {
+            console.error('대안적 mint 실패:', error);
+            this.showLoading(false);
+            this.showError('대안적 mint 실패: ' + error.message);
+        }
     }
     
     showLoading(show) {

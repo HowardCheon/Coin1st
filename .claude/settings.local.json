@@ -42,7 +42,10 @@
       "Bash(surge:*)",
       "Bash(npx surge:*)",
       "Bash(npx netlify deploy:*)",
-      "Read(/C:\\ETC\\claude\\stable_coin\\scripts/**)"
+      "Read(/C:\\ETC\\claude\\stable_coin\\scripts/**)",
+      "Read(/C:\\ETC\\claude\\stable_coin/**)",
+      "Read(/C:\\ETC\\claude\\stable_coin/**)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
