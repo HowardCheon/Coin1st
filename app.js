@@ -604,10 +604,17 @@ class StableCoinDApp {
             const mintAmount = document.getElementById('mintAmount').value;
             
             console.log('발행 정보:', { mintAddress, mintAmount });
+            console.log('주소 길이:', mintAddress ? mintAddress.length : 'null');
+            console.log('주소 검증 결과:', ethers.utils.isAddress(mintAddress));
             
-            if (!mintAddress || !ethers.utils.isAddress(mintAddress)) {
-                console.log('잘못된 주소');
-                throw new Error('올바른 받는 주소를 입력해주세요.');
+            if (!mintAddress) {
+                console.log('주소가 비어있음');
+                throw new Error('받는 주소를 입력해주세요.');
+            }
+            
+            if (!ethers.utils.isAddress(mintAddress)) {
+                console.log('잘못된 주소 형식:', mintAddress);
+                throw new Error('올바른 이더리움 주소 형식이 아닙니다. (0x로 시작하는 42자리)');
             }
             
             if (!mintAmount || parseFloat(mintAmount) <= 0) {
