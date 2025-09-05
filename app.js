@@ -167,6 +167,10 @@ class StableCoinDApp {
             });
             
             console.log('받은 계정들:', accounts);
+            if (accounts.length === 0) {
+                throw new Error('계정을 선택해주세요.');
+            }
+            
             this.account = accounts[0];
             this.chainId = await window.ethereum.request({ 
                 method: 'eth_chainId' 
@@ -175,8 +179,9 @@ class StableCoinDApp {
             console.log('연결된 계정:', this.account);
             console.log('체인 ID:', this.chainId);
             
-            await this.updateWalletInfo();
+            // UI 업데이트 순서 중요: 먼저 연결 상태를 업데이트하고 지갑 정보를 업데이트
             this.updateConnectionStatus();
+            await this.updateWalletInfo();
             
             this.showLoading(false);
             this.showSuccess('MetaMask 연결 성공!');
@@ -189,33 +194,53 @@ class StableCoinDApp {
     }
     
     async updateWalletInfo() {
-        if (!this.account) return;
+        console.log('updateWalletInfo 호출됨, account:', this.account);
+        if (!this.account) {
+            console.log('계정이 없어서 리턴');
+            return;
+        }
         
-        document.getElementById('walletAddress').textContent = 
-            this.account.slice(0, 6) + '...' + this.account.slice(-4);
-        
-        // Get ETH balance
-        const balance = await this.web3.getBalance(this.account);
-        document.getElementById('ethBalance').textContent = 
-            parseFloat(ethers.utils.formatEther(balance)).toFixed(4) + ' ETH';
-        
-        document.getElementById('walletInfo').style.display = 'block';
-        
-        // Update network info
-        const networkName = this.getNetworkName();
-        document.getElementById('currentNetwork').textContent = networkName;
+        try {
+            console.log('지갑 주소 업데이트 중...');
+            document.getElementById('walletAddress').textContent = 
+                this.account.slice(0, 6) + '...' + this.account.slice(-4);
+            
+            console.log('ETH 잔액 조회 중...');
+            // Get ETH balance
+            const balance = await this.web3.getBalance(this.account);
+            console.log('조회된 잔액:', balance.toString());
+            document.getElementById('ethBalance').textContent = 
+                parseFloat(ethers.utils.formatEther(balance)).toFixed(4) + ' ETH';
+            
+            console.log('지갑 정보 섹션 표시 중...');
+            document.getElementById('walletInfo').style.display = 'block';
+            
+            // Update network info
+            const networkName = this.getNetworkName();
+            console.log('네트워크명:', networkName);
+            document.getElementById('currentNetwork').textContent = networkName;
+            
+            console.log('updateWalletInfo 완료');
+        } catch (error) {
+            console.error('지갑 정보 업데이트 실패:', error);
+        }
     }
     
     updateConnectionStatus() {
+        console.log('updateConnectionStatus 호출됨, account:', this.account);
         const statusDiv = document.getElementById('connectionStatus');
+        console.log('statusDiv 요소:', !!statusDiv);
         
         if (this.account) {
+            console.log('연결됨 상태로 업데이트');
             statusDiv.className = 'status connected';
             statusDiv.textContent = '✅ MetaMask 연결됨';
         } else {
+            console.log('연결 안됨 상태로 업데이트');
             statusDiv.className = 'status disconnected';
             statusDiv.textContent = '❌ MetaMask 연결되지 않음';
         }
+        console.log('updateConnectionStatus 완료, 클래스:', statusDiv.className, '텍스트:', statusDiv.textContent);
     }
     
     disconnect() {
