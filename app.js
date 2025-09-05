@@ -413,7 +413,7 @@ class StableCoinDApp {
         this.chainId = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('현재 체인 ID:', this.chainId, '목표 체인 ID:', targetNetwork.chainId);
         
-        if (this.chainId !== targetNetwork.chainId) {
+        if (this.chainId.toLowerCase() !== targetNetwork.chainId.toLowerCase()) {
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
