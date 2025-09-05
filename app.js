@@ -656,11 +656,15 @@ class StableCoinDApp {
             
             console.log('mint 트랜잭션 전송 중...');
             
-            // 타임아웃과 함께 트랜잭션 전송
+            // 타임아웃과 함께 트랜잭션 전송 (2분으로 연장)
             const txPromise = this.contract.mint(mintAddress, amountWei);
             const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('트랜잭션 전송 타임아웃 (30초)')), 30000);
+                setTimeout(() => reject(new Error('트랜잭션 전송 타임아웃 (2분). MetaMask 팝업을 확인하거나 네트워크 상태를 점검해주세요.')), 120000);
             });
+            
+            // 사용자에게 MetaMask 확인 알림
+            this.showSuccess('MetaMask 팝업을 확인해주세요. 트랜잭션 승인이 필요합니다.');
+            console.log('MetaMask 팝업을 확인해주세요...');
             
             const tx = await Promise.race([txPromise, timeoutPromise]);
             console.log('트랜잭션 해시:', tx.hash);
