@@ -121,6 +121,7 @@ class StableCoinDApp {
         document.getElementById('mintTokens').addEventListener('click', () => this.mintTokens());
         document.getElementById('mintTokensAlt').addEventListener('click', () => this.mintTokensAlternative());
         document.getElementById('fillMyAddress').addEventListener('click', () => this.fillMyAddress());
+        document.getElementById('refreshMetaMask').addEventListener('click', () => this.refreshMetaMask());
         document.getElementById('burnTokens').addEventListener('click', () => this.burnTokens());
         document.getElementById('togglePause').addEventListener('click', () => this.togglePause());
         document.getElementById('addBlacklist').addEventListener('click', () => this.addToBlacklist());
@@ -509,6 +510,40 @@ class StableCoinDApp {
         this.showSuccess('내 주소로 설정되었습니다.');
     }
     
+    async refreshMetaMask() {
+        console.log('MetaMask 연결 새로고침 시도');
+        try {
+            this.showLoading(true);
+            
+            // 1. MetaMask 연결 강제 새로고침
+            console.log('1. MetaMask 연결 재요청');
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            
+            // 2. 계정 정보 업데이트
+            console.log('2. 계정 정보 업데이트');
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            this.account = accounts[0];
+            
+            // 3. 네트워크 정보 업데이트
+            console.log('3. 네트워크 정보 업데이트');
+            this.chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            this.web3 = new ethers.providers.Web3Provider(window.ethereum);
+            
+            // 4. UI 업데이트
+            console.log('4. UI 업데이트');
+            this.updateConnectionStatus();
+            await this.updateWalletInfo();
+            
+            this.showLoading(false);
+            this.showSuccess('MetaMask 연결이 새로고침되었습니다!');
+            
+        } catch (error) {
+            console.error('MetaMask 새로고침 실패:', error);
+            this.showLoading(false);
+            this.showError('MetaMask 새로고침 실패: ' + error.message);
+        }
+    }
+    
     async testContractConnection() {
         console.log('컨트랙트 연결 테스트 시작');
         try {
@@ -618,10 +653,46 @@ class StableCoinDApp {
             
             console.log('트랜잭션 파라미터:', txParams);
             
-            const txHash = await window.ethereum.request({
-                method: 'eth_sendTransaction',
-                params: [txParams],
-            });
+            // 여러 방법으로 트랜잭션 시도
+            let txHash;
+            
+            try {
+                console.log('방법 1: eth_sendTransaction 시도...');
+                // 5초 타임아웃으로 시도
+                const txPromise = window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [txParams],
+                });
+                
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('eth_sendTransaction 타임아웃')), 5000)
+                );
+                
+                txHash = await Promise.race([txPromise, timeoutPromise]);
+                console.log('방법 1 성공!');
+                
+            } catch (error) {
+                console.log('방법 1 실패:', error.message);
+                
+                try {
+                    console.log('방법 2: MetaMask 직접 요청 시도...');
+                    // MetaMask를 직접 열어보기
+                    await window.ethereum.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+                    
+                    console.log('방법 2-1: 권한 후 재시도...');
+                    txHash = await window.ethereum.request({
+                        method: 'eth_sendTransaction',
+                        params: [txParams],
+                    });
+                    console.log('방법 2 성공!');
+                    
+                } catch (error2) {
+                    console.log('방법 2 실패:', error2.message);
+                    
+                    // 최종 대안: 사용자에게 직접 안내
+                    throw new Error('MetaMask 팝업이 나타나지 않습니다. 다음을 시도해보세요:\n1. MetaMask 확장 프로그램을 직접 클릭\n2. 브라우저 팝업 차단 해제\n3. 페이지 새로고침 후 재시도\n\n원본 오류: ' + error.message);
+                }
+            }
             
             console.log('트랜잭션 해시:', txHash);
             this.showSuccess(`대안 방식으로 트랜잭션 전송 완료! 해시: ${txHash}`);
