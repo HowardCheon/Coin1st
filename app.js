@@ -253,39 +253,59 @@ class StableCoinDApp {
     }
     
     async loadContract() {
+        console.log('loadContract 함수 호출됨');
         try {
             this.showLoading(true);
+            console.log('로딩 표시 시작');
             
             if (!this.account) {
+                console.log('계정이 없음');
                 throw new Error('먼저 지갑을 연결해주세요.');
             }
             
             const contractAddress = document.getElementById('contractAddress').value;
+            console.log('컨트랙트 주소:', contractAddress);
+            
             if (!contractAddress || !ethers.utils.isAddress(contractAddress)) {
+                console.log('잘못된 컨트랙트 주소');
                 throw new Error('올바른 컨트랙트 주소를 입력해주세요.');
             }
             
+            console.log('네트워크 확인 및 전환 중...');
             // Check if we need to switch networks
             await this.checkAndSwitchNetwork();
             
+            console.log('컨트랙트 인스턴스 생성 중...');
             const signer = this.web3.getSigner();
             this.contract = new ethers.Contract(contractAddress, this.tokenABI, signer);
             
+            console.log('토큰 정보 로드 중...');
             await this.loadTokenInfo();
             
+            console.log('컨트랙트 로드 완료');
             this.showLoading(false);
             this.showSuccess('토큰 컨트랙트 로드 완료!');
             
         } catch (error) {
+            console.error('컨트랙트 로드 오류:', error);
+            console.error('오류 상세:', error.message);
             this.showLoading(false);
             this.showError('컨트랙트 로드 실패: ' + error.message);
+            
+            // 컨트랙트 초기화
+            this.contract = null;
         }
     }
     
     async loadTokenInfo() {
-        if (!this.contract) return;
+        console.log('loadTokenInfo 함수 호출됨');
+        if (!this.contract) {
+            console.log('컨트랙트가 없어서 리턴');
+            return;
+        }
         
         try {
+            console.log('토큰 기본 정보 조회 중...');
             const [name, symbol, decimals, totalSupply] = await Promise.all([
                 this.contract.name(),
                 this.contract.symbol(),
@@ -293,20 +313,29 @@ class StableCoinDApp {
                 this.contract.totalSupply()
             ]);
             
+            console.log('토큰 정보:', { name, symbol, decimals: decimals.toString(), totalSupply: totalSupply.toString() });
+            
             document.getElementById('tokenName').textContent = name;
             document.getElementById('tokenSymbol').textContent = symbol;
             document.getElementById('totalSupply').textContent = 
                 parseFloat(ethers.utils.formatEther(totalSupply)).toLocaleString() + ' ' + symbol;
             
+            console.log('잔액 새로고침 중...');
             await this.refreshBalance();
             
+            console.log('관리자 상태 확인 중...');
             // Check admin status
             await this.checkAdminStatus();
             
+            console.log('토큰 정보 UI 표시 중...');
             document.getElementById('tokenInfo').style.display = 'block';
             document.getElementById('transferSection').style.display = 'block';
             
+            console.log('loadTokenInfo 완료');
+            
         } catch (error) {
+            console.error('토큰 정보 로드 오류:', error);
+            console.error('오류 상세:', error.message);
             throw new Error('토큰 정보를 가져올 수 없습니다: ' + error.message);
         }
     }
