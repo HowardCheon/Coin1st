@@ -120,6 +120,7 @@ class StableCoinDApp {
         // Admin functions
         document.getElementById('mintTokens').addEventListener('click', () => this.mintTokens());
         document.getElementById('mintTokensAlt').addEventListener('click', () => this.mintTokensAlternative());
+        document.getElementById('fillMyAddress').addEventListener('click', () => this.fillMyAddress());
         document.getElementById('burnTokens').addEventListener('click', () => this.burnTokens());
         document.getElementById('togglePause').addEventListener('click', () => this.togglePause());
         document.getElementById('addBlacklist').addEventListener('click', () => this.addToBlacklist());
@@ -496,6 +497,18 @@ class StableCoinDApp {
         return networkNames[this.chainId] || `Unknown (${this.chainId})`;
     }
     
+    fillMyAddress() {
+        if (!this.account) {
+            this.showError('먼저 MetaMask를 연결해주세요.');
+            return;
+        }
+        
+        const mintAddressField = document.getElementById('mintAddress');
+        mintAddressField.value = this.account;
+        console.log('내 주소로 자동 채움:', this.account);
+        this.showSuccess('내 주소로 설정되었습니다.');
+    }
+    
     async testContractConnection() {
         console.log('컨트랙트 연결 테스트 시작');
         try {
@@ -572,8 +585,20 @@ class StableCoinDApp {
             const mintAddress = document.getElementById('mintAddress').value;
             const mintAmount = document.getElementById('mintAmount').value;
             
-            if (!mintAddress || !ethers.utils.isAddress(mintAddress)) {
-                throw new Error('올바른 받는 주소를 입력해주세요.');
+            console.log('대안 방식 - 입력값 확인:', {
+                mintAddress: `"${mintAddress}"`,
+                mintAddressLength: mintAddress ? mintAddress.length : 0,
+                mintAmount: `"${mintAmount}"`
+            });
+            
+            console.log('주소 검증 결과:', ethers.utils.isAddress(mintAddress));
+            
+            if (!mintAddress) {
+                throw new Error('받는 주소를 입력해주세요.');
+            }
+            
+            if (!ethers.utils.isAddress(mintAddress)) {
+                throw new Error(`올바른 이더리움 주소 형식이 아닙니다. 입력값: "${mintAddress}"`);
             }
             
             if (!mintAmount || parseFloat(mintAmount) <= 0) {
